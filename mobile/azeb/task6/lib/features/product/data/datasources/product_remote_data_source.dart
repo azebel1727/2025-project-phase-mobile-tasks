@@ -1,6 +1,6 @@
 // lib/features/product/data/datasources/product_remote_data_source.dart
 
-import '../../domain/entities/product.dart';
+import '../../../../domain/entities/product.dart';
 
 abstract class ProductRemoteDataSource {
   Future<List<Product>> fetchProductsFromApi();

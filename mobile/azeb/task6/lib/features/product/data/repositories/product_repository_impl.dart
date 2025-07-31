@@ -1,6 +1,6 @@
 // lib/features/product/data/repositories/product_repository_impl.dart
 
-import '../../domain/entities/product.dart';
+import '../../../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../datasources/product_local_data_source.dart';
 import '../datasources/product_remote_data_source.dart';
