@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:task6/features/product/data/datasources/product_local_datasource_impl.dart';
 import 'package:task6/features/product/data/models/product_model.dart';
 
-class MockSharedPreferences extends Mock implements SharedPreferences {}
+@GenerateMocks([SharedPreferences])
+import 'product_local_datasource_impl_test.mocks.dart';
 
 void main() {
   late ProductLocalDatasourceImpl datasource;
@@ -33,20 +35,20 @@ void main() {
   group('cacheProducts', () {
     test('should call SharedPreferences to cache the data', () async {
       when(
-        mockSharedPreferences.setString(any<String>(), any<String>()),
+        mockSharedPreferences.setString(any, any),
       ).thenAnswer((_) async => true);
 
       await datasource.cacheProducts(productList);
 
-      verify(mockSharedPreferences.setString(cachedProductsKey, cachedJson));
+      verify(
+        mockSharedPreferences.setString(cachedProductsKey, cachedJson),
+      ).called(1);
     });
   });
 
   group('getLastCachedProducts', () {
     test('should return list of products from SharedPreferences', () async {
-      when(
-        mockSharedPreferences.getString(any<String>()),
-      ).thenReturn(cachedJson);
+      when(mockSharedPreferences.getString(any)).thenReturn(cachedJson);
 
       final result = await datasource.getLastCachedProducts();
 
@@ -54,7 +56,7 @@ void main() {
     });
 
     test('should throw Exception when no cached data', () {
-      when(mockSharedPreferences.getString(any<String>())).thenReturn(null);
+      when(mockSharedPreferences.getString(any)).thenReturn(null);
 
       expect(() => datasource.getLastCachedProducts(), throwsException);
     });
