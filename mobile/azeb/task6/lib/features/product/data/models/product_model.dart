@@ -1,5 +1,3 @@
-// lib/features/product/data/models/product_model.dart
-
 import 'package:equatable/equatable.dart';
 import '../../../../domain/entities/product.dart';
 
@@ -29,28 +27,28 @@ class ProductModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'imageUrl': imageUrl,
-        'price': price,
-      };
+    'id': id,
+    'name': name,
+    'description': description,
+    'imageUrl': imageUrl,
+    'price': price,
+  };
 
   Product toEntity() => Product(
-        id: id,
-        name: name,
-        description: description,
-        imageUrl: imageUrl,
-        price: price,
-      );
+    id: id,
+    name: name,
+    description: description,
+    imageUrl: imageUrl,
+    price: price,
+  );
 
   factory ProductModel.fromEntity(Product product) => ProductModel(
-        id: product.id,
-        name: product.name,
-        description: product.description,
-        imageUrl: product.imageUrl,
-        price: product.price,
-      );
+    id: product.id,
+    name: product.name,
+    description: product.description,
+    imageUrl: product.imageUrl,
+    price: product.price,
+  );
 
   @override
   List<Object?> get props => [id, name, description, imageUrl, price];

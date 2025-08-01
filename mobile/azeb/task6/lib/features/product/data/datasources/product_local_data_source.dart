@@ -1,13 +1,11 @@
-// lib/features/product/data/datasources/product_local_data_source.dart
-
-import '../../../../domain/entities/product.dart';
+import '../models/product_model.dart';
 
 abstract class ProductLocalDataSource {
-  Future<List<Product>> getCachedProducts();
-  Future<void> cacheProducts(List<Product> products);
+  Future<void> cacheProducts(List<ProductModel> products);
+  Future<List<ProductModel>> getLastCachedProducts();
 
-  Future<Product?> getProduct(String id);
-  Future<void> createProduct(Product product);
-  Future<void> updateProduct(Product product);
+  Future<ProductModel?> getProductById(String id);
+  Future<void> createProduct(ProductModel product);
+  Future<void> updateProduct(ProductModel product);
   Future<void> deleteProduct(String id);
 }

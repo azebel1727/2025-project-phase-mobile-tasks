@@ -4,6 +4,7 @@ import '../../../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 import '../datasources/product_local_data_source.dart';
 import '../datasources/product_remote_data_source.dart';
+import '../models/product_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
@@ -21,13 +22,19 @@ class ProductRepositoryImpl implements ProductRepository {
     if (await networkInfo.isConnected) {
       try {
         final remoteProducts = await remoteDataSource.fetchProductsFromApi();
-        await localDataSource.cacheProducts(remoteProducts);
+        // Convert entities to models before caching
+        final productModels = remoteProducts
+            .map(ProductModel.fromEntity)
+            .toList();
+        await localDataSource.cacheProducts(productModels);
         return remoteProducts;
       } catch (e) {
-        return await localDataSource.getCachedProducts();
+        final cachedModels = await localDataSource.getLastCachedProducts();
+        return cachedModels.map((model) => model.toEntity()).toList();
       }
     } else {
-      return await localDataSource.getCachedProducts();
+      final cachedModels = await localDataSource.getLastCachedProducts();
+      return cachedModels.map((model) => model.toEntity()).toList();
     }
   }
 
@@ -38,10 +45,12 @@ class ProductRepositoryImpl implements ProductRepository {
         final remoteProduct = await remoteDataSource.fetchProductById(id);
         return remoteProduct;
       } catch (e) {
-        return await localDataSource.getProduct(id);
+        final cachedModel = await localDataSource.getProductById(id);
+        return cachedModel?.toEntity();
       }
     } else {
-      return await localDataSource.getProduct(id);
+      final cachedModel = await localDataSource.getProductById(id);
+      return cachedModel?.toEntity();
     }
   }
 
@@ -49,7 +58,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> createProduct(Product product) async {
     if (await networkInfo.isConnected) {
       await remoteDataSource.createProductOnApi(product);
-      await localDataSource.createProduct(product);
+      await localDataSource.createProduct(ProductModel.fromEntity(product));
     } else {
       throw NoInternetException();
     }
@@ -59,7 +68,7 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> updateProduct(Product product) async {
     if (await networkInfo.isConnected) {
       await remoteDataSource.updateProductOnApi(product);
-      await localDataSource.updateProduct(product);
+      await localDataSource.updateProduct(ProductModel.fromEntity(product));
     } else {
       throw Exception("No network connection. Cannot update product.");
     }
