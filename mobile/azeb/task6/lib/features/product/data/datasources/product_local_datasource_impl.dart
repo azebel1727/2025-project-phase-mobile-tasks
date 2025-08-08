@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../models/product_model.dart';
+import 'package:task6/domain/entities/product.dart';
 import 'product_local_data_source.dart';
 
 const cachedProductsKey = 'CACHED_PRODUCTS';
@@ -13,54 +11,75 @@ class ProductLocalDatasourceImpl implements ProductLocalDataSource {
   ProductLocalDatasourceImpl({required this.sharedPreferences});
 
   @override
-  Future<void> cacheProducts(List<ProductModel> products) async {
-    final jsonString = json.encode(products.map((p) => p.toJson()).toList());
+  Future<void> cacheProducts(List<Product> products) async {
+    final jsonList = products
+        .map(
+          (p) => {
+            'id': p.id,
+            'name': p.name,
+            'description': p.description,
+            'price': p.price,
+            'imageUrl': p.imageUrl,
+          },
+        )
+        .toList();
+    final jsonString = json.encode(jsonList);
     await sharedPreferences.setString(cachedProductsKey, jsonString);
   }
 
   @override
-  Future<List<ProductModel>> getLastCachedProducts() async {
+  Future<List<Product>> getCachedProducts() async {
     final jsonString = sharedPreferences.getString(cachedProductsKey);
-    if (jsonString != null) {
-      final List<dynamic> decodedJson = json.decode(jsonString);
-      return decodedJson
-          .map<ProductModel>((json) => ProductModel.fromJson(json))
-          .toList();
-    } else {
-      throw Exception('No Cached Products');
+    if (jsonString == null) throw Exception('No cached products found');
+
+    final List<dynamic> jsonList = json.decode(jsonString);
+    return jsonList
+        .map(
+          (json) => Product(
+            id: json['id'],
+            name: json['name'],
+            description: json['description'],
+            price: json['price'],
+            imageUrl: json['imageUrl'],
+          ),
+        )
+        .toList();
+  }
+
+  @override
+  Future<void> addProductToCache(Product product) async {
+    try {
+      final products = await getCachedProducts();
+      products.add(product);
+      await cacheProducts(products);
+    } catch (_) {
+      await cacheProducts([product]);
     }
   }
 
   @override
-  Future<ProductModel?> getProductById(String id) async {
-    final products = await getLastCachedProducts();
+  Future<void> updateCachedProduct(Product product) async {
+    final products = await getCachedProducts();
+    final index = products.indexWhere((p) => p.id == product.id);
+    if (index < 0) throw Exception('Product not found in cache');
+    products[index] = product;
+    await cacheProducts(products);
+  }
+
+  @override
+  Future<void> removeProductFromCache(String id) async {
+    final products = await getCachedProducts();
+    products.removeWhere((p) => p.id == id);
+    await cacheProducts(products);
+  }
+
+  @override
+  Future<Product?> getCachedProductById(String id) async {
+    final products = await getCachedProducts();
     try {
-      return products.firstWhere((product) => product.id == id);
+      return products.firstWhere((p) => p.id == id);
     } catch (_) {
       return null;
     }
-  }
-
-  @override
-  Future<void> createProduct(ProductModel product) async {
-    final products = await getLastCachedProducts();
-    final updatedProducts = List<ProductModel>.from(products)..add(product);
-    await cacheProducts(updatedProducts);
-  }
-
-  @override
-  Future<void> updateProduct(ProductModel product) async {
-    final products = await getLastCachedProducts();
-    final updatedProducts = products
-        .map((p) => p.id == product.id ? product : p)
-        .toList();
-    await cacheProducts(updatedProducts);
-  }
-
-  @override
-  Future<void> deleteProduct(String id) async {
-    final products = await getLastCachedProducts();
-    final updatedProducts = products.where((p) => p.id != id).toList();
-    await cacheProducts(updatedProducts);
   }
 }

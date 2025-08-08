@@ -1,38 +1,40 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
-import '../../../../domain/entities/product.dart';
-import '../models/product_model.dart';
-import 'product_remote_data_source.dart';
+import 'package:task6/features/product/data/models/product_model.dart';
 
-const String baseUrl = 'https://your-api-base-url.com/products';
+abstract class ProductRemoteDataSource {
+  Future<List<ProductModel>> fetchProductsFromApi();
+  Future<ProductModel?> fetchProductById(String id);
+  Future<void> createProductOnApi(ProductModel product);
+  Future<void> updateProductOnApi(ProductModel product);
+  Future<void> deleteProductFromApi(String id);
+}
 
 class ProductRemoteDatasourceImpl implements ProductRemoteDataSource {
   final http.Client client;
+  static const String baseUrl = 'https://your-api-base-url.com/products';
 
   ProductRemoteDatasourceImpl({required this.client});
 
   @override
-  Future<List<Product>> fetchProductsFromApi() async {
+  Future<List<ProductModel>> fetchProductsFromApi() async {
     final response = await client.get(Uri.parse(baseUrl));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
-      final products = jsonList
-          .map((json) => ProductModel.fromJson(json).toEntity())
-          .toList();
-      return products;
+      return jsonList.map((json) => ProductModel.fromJson(json)).toList();
     } else {
       throw Exception('Failed to load products');
     }
   }
 
   @override
-  Future<Product?> fetchProductById(String id) async {
+  Future<ProductModel?> fetchProductById(String id) async {
     final response = await client.get(Uri.parse('$baseUrl/$id'));
 
     if (response.statusCode == 200) {
-      return ProductModel.fromJson(json.decode(response.body)).toEntity();
+      final jsonMap = json.decode(response.body);
+      return ProductModel.fromJson(jsonMap);
     } else if (response.statusCode == 404) {
       return null;
     } else {
@@ -41,12 +43,11 @@ class ProductRemoteDatasourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<void> createProductOnApi(Product product) async {
-    final productModel = ProductModel.fromEntity(product);
+  Future<void> createProductOnApi(ProductModel product) async {
     final response = await client.post(
       Uri.parse(baseUrl),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(productModel.toJson()),
+      body: json.encode(product.toJson()),
     );
 
     if (response.statusCode != 201) {
@@ -55,12 +56,11 @@ class ProductRemoteDatasourceImpl implements ProductRemoteDataSource {
   }
 
   @override
-  Future<void> updateProductOnApi(Product product) async {
-    final productModel = ProductModel.fromEntity(product);
+  Future<void> updateProductOnApi(ProductModel product) async {
     final response = await client.put(
       Uri.parse('$baseUrl/${product.id}'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode(productModel.toJson()),
+      body: json.encode(product.toJson()),
     );
 
     if (response.statusCode != 200) {

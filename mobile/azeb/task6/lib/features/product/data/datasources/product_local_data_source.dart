@@ -1,11 +1,11 @@
-import '../models/product_model.dart';
+import 'package:task6/domain/entities/product.dart';
 
 abstract class ProductLocalDataSource {
-  Future<void> cacheProducts(List<ProductModel> products);
-  Future<List<ProductModel>> getLastCachedProducts();
+  Future<void> cacheProducts(List<Product> products);
+  Future<List<Product>> getCachedProducts();
 
-  Future<ProductModel?> getProductById(String id);
-  Future<void> createProduct(ProductModel product);
-  Future<void> updateProduct(ProductModel product);
-  Future<void> deleteProduct(String id);
+  Future<void> addProductToCache(Product product);
+  Future<void> updateCachedProduct(Product product);
+  Future<void> removeProductFromCache(String id);
+  Future<Product?> getCachedProductById(String id);
 }

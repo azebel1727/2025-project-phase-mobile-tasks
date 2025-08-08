@@ -1,9 +1,9 @@
 import 'package:task6/core/error/network/network_info.dart';
 import 'package:task6/domain/entities/product.dart';
 import 'package:task6/domain/repositories/product_repository.dart';
-import '../../data/datasources/product_local_data_source.dart';
-import '../../data/datasources/product_remote_data_source.dart';
-import '../../data/models/product_model.dart';
+import '../../features/product/data/datasources/product_local_data_source.dart';
+import '../../features/product/data/datasources/product_remote_data_source.dart';
+import '../../features/product/data/models/product_model.dart';
 
 class ProductRepositoryImpl implements ProductRepository {
   final ProductRemoteDataSource remoteDataSource;
@@ -21,12 +21,11 @@ class ProductRepositoryImpl implements ProductRepository {
     if (await networkInfo.isConnected) {
       try {
         final remoteModels = await remoteDataSource.fetchProductsFromApi();
-        final remoteProducts = remoteModels
-            .map((model) => model.toEntity())
-            .toList();
+        final remoteProducts = remoteModels.map((model) => model.toEntity()).toList();
         await localDataSource.cacheProducts(remoteProducts);
         return remoteProducts;
-      } catch (_) {
+      } catch (e) {
+        // If remote fetch fails, fallback to local cache
         return localDataSource.getCachedProducts();
       }
     } else {
@@ -40,7 +39,8 @@ class ProductRepositoryImpl implements ProductRepository {
       try {
         final model = await remoteDataSource.fetchProductById(id);
         return model?.toEntity();
-      } catch (_) {
+      } catch (e) {
+        // Fallback to cache if remote fetch fails
         return localDataSource.getCachedProductById(id);
       }
     } else {
@@ -52,8 +52,12 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> createProduct(Product product) async {
     final model = ProductModel.fromEntity(product);
     if (await networkInfo.isConnected) {
-      await remoteDataSource.createProductOnApi(model);
-      await localDataSource.addProductToCache(product);
+      try {
+        await remoteDataSource.createProductOnApi(model);
+        await localDataSource.addProductToCache(product);
+      } catch (e) {
+        rethrow;
+      }
     } else {
       throw Exception('No internet connection');
     }
@@ -63,8 +67,12 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> updateProduct(Product product) async {
     final model = ProductModel.fromEntity(product);
     if (await networkInfo.isConnected) {
-      await remoteDataSource.updateProductOnApi(model);
-      await localDataSource.updateCachedProduct(product);
+      try {
+        await remoteDataSource.updateProductOnApi(model);
+        await localDataSource.updateCachedProduct(product);
+      } catch (e) {
+        rethrow;
+      }
     } else {
       throw Exception('No internet connection');
     }
@@ -73,8 +81,12 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<void> deleteProduct(String id) async {
     if (await networkInfo.isConnected) {
-      await remoteDataSource.deleteProductFromApi(id);
-      await localDataSource.removeProductFromCache(id);
+      try {
+        await remoteDataSource.deleteProductFromApi(id);
+        await localDataSource.removeProductFromCache(id);
+      } catch (e) {
+        rethrow;
+      }
     } else {
       throw Exception('No internet connection');
     }
