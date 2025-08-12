@@ -40,7 +40,7 @@ class _SignUpPageState extends State<SignUpPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sign up successful!')),
         );
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/chat');
           } else if (state is AuthError) {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(

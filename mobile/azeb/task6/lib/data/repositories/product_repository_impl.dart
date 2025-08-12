@@ -25,7 +25,6 @@ class ProductRepositoryImpl implements ProductRepository {
         await localDataSource.cacheProducts(remoteProducts);
         return remoteProducts;
       } catch (e) {
-        // If remote fetch fails, fallback to local cache
         return localDataSource.getCachedProducts();
       }
     } else {

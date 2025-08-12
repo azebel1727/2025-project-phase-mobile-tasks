@@ -33,7 +33,7 @@ class _SignInPageState extends State<SignInPage> {
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
-            Navigator.pushReplacementNamed(context, '/home');
+            Navigator.pushReplacementNamed(context, '/chat');
           } else if (state is AuthError) {
             ScaffoldMessenger.of(
               context,
